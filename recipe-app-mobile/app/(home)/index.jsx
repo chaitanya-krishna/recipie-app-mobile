@@ -1,7 +1,7 @@
 import { View, Text, ScrollView, TouchableOpacity, FlatList, RefreshControl, ActivityIndicator, Alert } from "react-native";
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { useEffect, useState } from "react";
-import { useRouter } from "expo-router";
+import { useCallback, useEffect, useState } from "react";
+import { useFocusEffect, useRouter } from "expo-router";
 import { useClerk, useUser } from '@clerk/expo';
 import { MealAPI } from "../../services/mealAPI";
 import { homeStyles } from "../../assets/styles/home.styles";
@@ -13,6 +13,7 @@ import RecipeCard from "../../components/RecipeCard";
 
 const INITIAL_COUNT = 15;
 const LOAD_MORE_COUNT = 10;
+const FEATURED_ROTATE_MS = 7000; // show a new featured recipe every 7 seconds
 
 const HomeScreen = () => {
   const router = useRouter();
@@ -143,6 +144,37 @@ const HomeScreen = () => {
   useEffect(() => {
     loadData();
   }, []);
+
+  // Rotate the featured recipe every 7 seconds while this tab is open.
+  // The next photo is downloaded first so the card never flashes empty,
+  // and each change waits for the previous one to finish.
+  useFocusEffect(
+    useCallback(() => {
+      if (loading) return;
+
+      let cancelled = false;
+      let timer;
+
+      const showNextFeatured = async () => {
+        try {
+          const meal = await MealAPI.getRandomMeal();
+          const nextFeatured = MealAPI.transformMealData(meal);
+          if (nextFeatured?.image) await Image.prefetch(nextFeatured.image);
+          if (!cancelled && nextFeatured) setFeaturedRecipe(nextFeatured);
+        } catch (error) {
+          console.log("Error rotating featured recipe", error);
+        }
+        if (!cancelled) timer = setTimeout(showNextFeatured, FEATURED_ROTATE_MS);
+      };
+
+      timer = setTimeout(showNextFeatured, FEATURED_ROTATE_MS);
+
+      return () => {
+        cancelled = true;
+        clearTimeout(timer);
+      };
+    }, [loading])
+  );
 
   if (loading && !refreshing) {
     return (
