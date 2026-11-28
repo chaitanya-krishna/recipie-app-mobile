@@ -45,4 +45,18 @@ userName: {
     borderColor: COLORS.border,
   },
 
+  welcomeSection: {
+    paddingHorizontal: 8,
+    paddingTop: 5,
+    paddingBottom: 16,
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+  },
+  welcomeText: {
+    fontSize: 32,
+    fontWeight: "800",
+    color: COLORS.text,
+    letterSpacing: -0.5,
+  },
 });
