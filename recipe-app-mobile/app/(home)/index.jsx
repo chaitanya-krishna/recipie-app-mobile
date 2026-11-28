@@ -1,4 +1,4 @@
-import { View, Text, ScrollView, TouchableOpacity, FlatList, RefreshControl, ActivityIndicator } from "react-native";
+import { View, Text, ScrollView, TouchableOpacity, FlatList, RefreshControl, ActivityIndicator, Alert } from "react-native";
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useEffect, useState } from "react";
 import { useRouter } from "expo-router";
@@ -113,13 +113,31 @@ const HomeScreen = () => {
     setRefreshing(false);
   };
 
+  // ✅ ONLY THIS FUNCTION CHANGED — added confirmation alert
   const handleSignOut = async () => {
-    try {
-      await signOut();
-      router.replace("/(auth)/sign-in");
-    } catch (err) {
-      console.error("Sign out error:", err);
-    }
+    Alert.alert(
+      "Sign Out",
+      "Are you sure you want to sign out?",
+      [
+        {
+          text: "Cancel",
+          style: "cancel",
+          // ✅ stays on home screen
+        },
+        {
+          text: "Sign Out",
+          style: "destructive",
+          onPress: async () => {
+            try {
+              await signOut();
+              router.replace("/(auth)/sign-in");
+            } catch (err) {
+              console.error("Sign out error:", err);
+            }
+          },
+        },
+      ]
+    );
   };
 
   useEffect(() => {
