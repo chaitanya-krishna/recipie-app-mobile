@@ -8,12 +8,15 @@ import { homeStyles } from "../../assets/styles/home.styles";
 import { Image } from "expo-image";
 import { COLORS } from "../../constants/colors";
 import { Ionicons } from "@expo/vector-icons";
+import CategoryFilter from "../../components/CategoryFilter";
 
 const HomeScreen = () => {
   const router = useRouter();
   const { signOut } = useClerk();
   const { user } = useUser();
 
+  const [selectedCategory, setSelectedCategory] = useState(null);
+  const [categories, setCategories] = useState([]);
   const [featuredRecipe, setFeaturedRecipe] = useState(null);
   const [loading, setLoading] = useState(true);
 
@@ -21,7 +24,37 @@ const HomeScreen = () => {
     try {
       setLoading(true);
 
-      const featuredMeal = await MealAPI.getRandomMeal();
+      const [apiCategories, featuredMeal] = await Promise.all([
+        MealAPI.getCategories(),
+        MealAPI.getRandomMeal(),
+      ]);
+
+      const transformedCategories = apiCategories.map((cat, index) => ({
+        id: index + 1,
+        name: cat.strCategory,
+        image: cat.strCategoryThumb,
+        description: cat.strCategoryDescription,
+      }));
+
+      const preferredOrder = ['Dessert', 'Vegetarian', 'Vegan'];
+      const lastOrder = ['Beef', 'Chicken', 'Lamb'];
+
+      const preferred = preferredOrder
+        .map(name => transformedCategories.find(cat => cat.name === name))
+        .filter(Boolean);
+
+      const last = lastOrder
+        .map(name => transformedCategories.find(cat => cat.name === name))
+        .filter(Boolean);
+
+      const rest = transformedCategories.filter(
+        cat => !preferredOrder.includes(cat.name) && !lastOrder.includes(cat.name)
+      );
+
+      const orderedCategories = [...preferred, ...rest, ...last];
+
+      setCategories(orderedCategories);
+      setSelectedCategory('Dessert');
 
       const transformedFeatured = MealAPI.transformMealData(featuredMeal);
       setFeaturedRecipe(transformedFeatured);
@@ -31,6 +64,10 @@ const HomeScreen = () => {
     } finally {
       setLoading(false);
     }
+  };
+
+  const handleCategorySelect = (category) => {
+    setSelectedCategory(category);
   };
 
   const handleSignOut = async () => {
@@ -133,6 +170,15 @@ const HomeScreen = () => {
               </View>
             </TouchableOpacity>
           </View>
+        )}
+
+        {/* CATEGORY FILTER */}
+        {categories.length > 0 && (
+          <CategoryFilter
+            categories={categories}
+            selectedCategory={selectedCategory}
+            onSelectCategory={handleCategorySelect}
+          />
         )}
       </ScrollView>
     </SafeAreaView>

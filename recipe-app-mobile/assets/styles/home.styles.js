@@ -129,4 +129,56 @@ userName: {
     color: COLORS.white,
     fontWeight: "600",
   },
+  categoryFilterContainer: {
+    marginVertical: 16,
+  },
+  categoryFilterScrollContent: {
+    paddingHorizontal: 16,
+    gap: 12,
+  },
+  categoryButton: {
+    flexDirection: "column",
+    alignItems: "center",
+    justifyContent: "center",
+    backgroundColor: COLORS.card,
+    paddingVertical: 12,
+    paddingHorizontal: 16,
+    borderRadius: 20,
+    borderWidth: 1,
+    borderColor: COLORS.border,
+    minWidth: 80,
+    shadowColor: COLORS.shadow,
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.05,
+    shadowRadius: 4,
+    elevation: 2,
+  },
+  selectedCategory: {
+    backgroundColor: COLORS.primary,
+    borderColor: COLORS.primary,
+    shadowOpacity: 0.15,
+  },
+  categoryImage: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    marginBottom: 4,
+    backgroundColor: COLORS.border,
+  },
+  selectedCategoryImage: {
+    borderWidth: 2,
+    borderColor: COLORS.white,
+  },
+  categoryText: {
+    fontSize: 12,
+    fontWeight: "600",
+    color: COLORS.text,
+    textAlign: "center",
+  },
+  selectedCategoryText: {
+    color: COLORS.white,
+  },
 });

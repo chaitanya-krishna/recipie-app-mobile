@@ -12,6 +12,17 @@ export const MealAPI = {
     }
   },
 
+  getCategories: async () => {
+    try {
+      const response = await fetch(`${BASE_URL}/categories.php`);
+      const data = await response.json();
+      return data.categories || [];
+    } catch (error) {
+      console.error("Error getting categories:", error);
+      return [];
+    }
+  },
+
   transformMealData: (meal) => {
     if (!meal) return null;
 
