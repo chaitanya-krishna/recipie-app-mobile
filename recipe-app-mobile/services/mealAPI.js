@@ -23,6 +23,33 @@ export const MealAPI = {
     }
   },
 
+  filterByCategory: async (category) => {
+    try {
+      const response = await fetch(`${BASE_URL}/filter.php?c=${encodeURIComponent(category)}`);
+      const data = await response.json();
+      return data.meals || [];
+    } catch (error) {
+      console.error("Error filtering by category:", error);
+      return [];
+    }
+  },
+
+  transformBasicMealData: (meal) => {
+    if (!meal) return null;
+    return {
+      id: meal.idMeal,
+      title: meal.strMeal,
+      image: meal.strMealThumb,
+      cookTime: "30 mins",
+      servings: 4,
+      category: "",
+      area: "",
+      ingredients: [],
+      instructions: [],
+      description: "Tap to view full recipe details",
+    };
+  },
+
   transformMealData: (meal) => {
     if (!meal) return null;
 

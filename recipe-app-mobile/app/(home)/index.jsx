@@ -1,4 +1,4 @@
-import { View, Text, ScrollView, TouchableOpacity } from "react-native";
+import { View, Text, ScrollView, TouchableOpacity, FlatList } from "react-native";
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useEffect, useState } from "react";
 import { useRouter } from "expo-router";
@@ -9,6 +9,7 @@ import { Image } from "expo-image";
 import { COLORS } from "../../constants/colors";
 import { Ionicons } from "@expo/vector-icons";
 import CategoryFilter from "../../components/CategoryFilter";
+import RecipeCard from "../../components/RecipeCard";
 
 const HomeScreen = () => {
   const router = useRouter();
@@ -16,9 +17,24 @@ const HomeScreen = () => {
   const { user } = useUser();
 
   const [selectedCategory, setSelectedCategory] = useState(null);
+  const [allRecipes, setAllRecipes] = useState([]);
   const [categories, setCategories] = useState([]);
   const [featuredRecipe, setFeaturedRecipe] = useState(null);
   const [loading, setLoading] = useState(true);
+
+  const loadCategoryData = async (category) => {
+    try {
+      const meals = await MealAPI.filterByCategory(category);
+      const transformedMeals = meals
+        .map((meal) => MealAPI.transformBasicMealData(meal))
+        .filter((meal) => meal !== null);
+
+      setAllRecipes(transformedMeals);
+    } catch (error) {
+      console.error("Error loading category data:", error);
+      setAllRecipes([]);
+    }
+  };
 
   const loadData = async () => {
     try {
@@ -59,6 +75,8 @@ const HomeScreen = () => {
       const transformedFeatured = MealAPI.transformMealData(featuredMeal);
       setFeaturedRecipe(transformedFeatured);
 
+      await loadCategoryData('Dessert');
+
     } catch (error) {
       console.log("Error loading the data", error);
     } finally {
@@ -66,8 +84,9 @@ const HomeScreen = () => {
     }
   };
 
-  const handleCategorySelect = (category) => {
+  const handleCategorySelect = async (category) => {
     setSelectedCategory(category);
+    await loadCategoryData(category);
   };
 
   const handleSignOut = async () => {
@@ -180,6 +199,31 @@ const HomeScreen = () => {
             onSelectCategory={handleCategorySelect}
           />
         )}
+
+        {/* RECIPES GRID */}
+        <View style={homeStyles.recipesSection}>
+          <View style={homeStyles.sectionHeader}>
+            <Text style={homeStyles.sectionTitle}>{selectedCategory}</Text>
+          </View>
+
+          {allRecipes.length > 0 ? (
+            <FlatList
+              data={allRecipes}
+              renderItem={({ item }) => <RecipeCard recipe={item} />}
+              keyExtractor={(item) => item.id.toString()}
+              numColumns={2}
+              columnWrapperStyle={homeStyles.row}
+              contentContainerStyle={homeStyles.recipesGrid}
+              scrollEnabled={false}
+            />
+          ) : (
+            <View style={homeStyles.emptyState}>
+              <Ionicons name="restaurant-outline" size={64} color={COLORS.textLight} />
+              <Text style={homeStyles.emptyTitle}>No recipes found</Text>
+              <Text style={homeStyles.emptyDescription}>Try a different category</Text>
+            </View>
+          )}
+        </View>
       </ScrollView>
     </SafeAreaView>
   );
