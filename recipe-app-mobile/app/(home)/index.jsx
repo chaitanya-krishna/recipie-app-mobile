@@ -1,4 +1,4 @@
-import { View, Text, ScrollView, TouchableOpacity, FlatList } from "react-native";
+import { View, Text, ScrollView, TouchableOpacity, FlatList, ActivityIndicator } from "react-native";
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useEffect, useState } from "react";
 import { useRouter } from "expo-router";
@@ -11,6 +11,9 @@ import { Ionicons } from "@expo/vector-icons";
 import CategoryFilter from "../../components/CategoryFilter";
 import RecipeCard from "../../components/RecipeCard";
 
+const INITIAL_COUNT = 15;
+const LOAD_MORE_COUNT = 10;
+
 const HomeScreen = () => {
   const router = useRouter();
   const { signOut } = useClerk();
@@ -18,9 +21,12 @@ const HomeScreen = () => {
 
   const [selectedCategory, setSelectedCategory] = useState(null);
   const [allRecipes, setAllRecipes] = useState([]);
+  const [visibleRecipes, setVisibleRecipes] = useState([]);
+  const [visibleCount, setVisibleCount] = useState(INITIAL_COUNT);
   const [categories, setCategories] = useState([]);
   const [featuredRecipe, setFeaturedRecipe] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [loadingMore, setLoadingMore] = useState(false);
 
   const loadCategoryData = async (category) => {
     try {
@@ -30,10 +36,21 @@ const HomeScreen = () => {
         .filter((meal) => meal !== null);
 
       setAllRecipes(transformedMeals);
+      setVisibleCount(INITIAL_COUNT);
+      setVisibleRecipes(transformedMeals.slice(0, INITIAL_COUNT));
     } catch (error) {
       console.error("Error loading category data:", error);
       setAllRecipes([]);
+      setVisibleRecipes([]);
     }
+  };
+
+  const handleLoadMore = () => {
+    setLoadingMore(true);
+    const newCount = visibleCount + LOAD_MORE_COUNT;
+    setVisibleCount(newCount);
+    setVisibleRecipes(allRecipes.slice(0, newCount));
+    setLoadingMore(false);
   };
 
   const loadData = async () => {
@@ -109,6 +126,8 @@ const HomeScreen = () => {
       </SafeAreaView>
     );
   }
+
+  const hasMore = visibleCount < allRecipes.length;
 
   return (
     <SafeAreaView style={homeStyles.container} edges={['top']}>
@@ -204,18 +223,65 @@ const HomeScreen = () => {
         <View style={homeStyles.recipesSection}>
           <View style={homeStyles.sectionHeader}>
             <Text style={homeStyles.sectionTitle}>{selectedCategory}</Text>
+            <Text style={{ color: COLORS.textLight, fontSize: 13 }}>
+              {visibleRecipes.length} of {allRecipes.length}
+            </Text>
           </View>
 
-          {allRecipes.length > 0 ? (
-            <FlatList
-              data={allRecipes}
-              renderItem={({ item }) => <RecipeCard recipe={item} />}
-              keyExtractor={(item) => item.id.toString()}
-              numColumns={2}
-              columnWrapperStyle={homeStyles.row}
-              contentContainerStyle={homeStyles.recipesGrid}
-              scrollEnabled={false}
-            />
+          {visibleRecipes.length > 0 ? (
+            <>
+              <FlatList
+                data={visibleRecipes}
+                renderItem={({ item }) => <RecipeCard recipe={item} />}
+                keyExtractor={(item) => item.id.toString()}
+                numColumns={2}
+                columnWrapperStyle={homeStyles.row}
+                contentContainerStyle={homeStyles.recipesGrid}
+                scrollEnabled={false}
+              />
+
+              {/* LOAD MORE BUTTON */}
+              {hasMore && (
+                <TouchableOpacity
+                  onPress={handleLoadMore}
+                  disabled={loadingMore}
+                  style={{
+                    marginTop: 16,
+                    marginBottom: 8,
+                    marginHorizontal: 16,
+                    paddingVertical: 14,
+                    borderRadius: 12,
+                    borderWidth: 1.5,
+                    borderColor: COLORS.primary,
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    flexDirection: 'row',
+                    gap: 8,
+                    backgroundColor: 'transparent',
+                  }}
+                >
+                  {loadingMore ? (
+                    <ActivityIndicator size="small" color={COLORS.primary} />
+                  ) : (
+                    <>
+                      <Text style={{ color: COLORS.primary, fontSize: 15, fontWeight: '600' }}>
+                        View More
+                      </Text>
+                      <Ionicons name="chevron-down" size={18} color={COLORS.primary} />
+                    </>
+                  )}
+                </TouchableOpacity>
+              )}
+
+              {/* ALL LOADED MESSAGE */}
+              {!hasMore && allRecipes.length > INITIAL_COUNT && (
+                <View style={{ alignItems: 'center', paddingVertical: 16 }}>
+                  <Text style={{ color: COLORS.textLight, fontSize: 13 }}>
+                    All {allRecipes.length} recipes loaded ✓
+                  </Text>
+                </View>
+              )}
+            </>
           ) : (
             <View style={homeStyles.emptyState}>
               <Ionicons name="restaurant-outline" size={64} color={COLORS.textLight} />
