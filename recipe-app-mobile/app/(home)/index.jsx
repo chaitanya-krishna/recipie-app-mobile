@@ -1,4 +1,4 @@
-import { View, Text, ScrollView, TouchableOpacity, FlatList, ActivityIndicator } from "react-native";
+import { View, Text, ScrollView, TouchableOpacity, FlatList, RefreshControl, ActivityIndicator } from "react-native";
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useEffect, useState } from "react";
 import { useRouter } from "expo-router";
@@ -27,6 +27,7 @@ const HomeScreen = () => {
   const [featuredRecipe, setFeaturedRecipe] = useState(null);
   const [loading, setLoading] = useState(true);
   const [loadingMore, setLoadingMore] = useState(false);
+  const [refreshing, setRefreshing] = useState(false);
 
   const loadCategoryData = async (category) => {
     try {
@@ -106,6 +107,12 @@ const HomeScreen = () => {
     await loadCategoryData(category);
   };
 
+  const onRefresh = async () => {
+    setRefreshing(true);
+    await loadData();
+    setRefreshing(false);
+  };
+
   const handleSignOut = async () => {
     try {
       await signOut();
@@ -119,7 +126,7 @@ const HomeScreen = () => {
     loadData();
   }, []);
 
-  if (loading) {
+  if (loading && !refreshing) {
     return (
       <SafeAreaView style={{ flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: COLORS.background }} edges={['top']}>
         <Text style={{ color: COLORS.textLight, fontSize: 16 }}>Loading delicious recipes...</Text>
@@ -133,6 +140,13 @@ const HomeScreen = () => {
     <SafeAreaView style={homeStyles.container} edges={['top']}>
       <ScrollView
         showsVerticalScrollIndicator={false}
+        refreshControl={
+          <RefreshControl
+            refreshing={refreshing}
+            onRefresh={onRefresh}
+            tintColor={COLORS.primary}
+          />
+        }
         contentContainerStyle={homeStyles.scrollContent}
       >
         {/* HEADER */}
